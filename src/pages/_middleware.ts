@@ -1,17 +1,20 @@
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
-import { nanoid } from "nanoid";
 
-export function middleware(req: NextRequest, ev: NextFetchEvent) {
-  if (req.url.startsWith("api/get-url/")) {
+export async function middleware(req: NextRequest, ev: NextFetchEvent) {
+  if (req.nextUrl.pathname.startsWith("api/get-url/")) {
     console.log("returning early");
     return;
   }
 
-  const random = nanoid();
+  const slug = req.nextUrl.pathname.split("/").pop();
 
-  const res = NextResponse.next();
+  const data = await (
+    await fetch(`${req.nextUrl.origin}/api/get-url/${slug}`)
+  ).json();
 
-  res.cookie("pool-token", random, { sameSite: "strict" });
+  if (data?.url) {
+    return NextResponse.redirect(data.url);
+  }
 
-  return res;
+  console.log("slug?", slug);
 }
